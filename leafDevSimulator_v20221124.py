@@ -3,73 +3,73 @@ import matplotlib.pylab as plt
 import numpy as np
 import sys
 
-end_time = 1000000 # total simulation time: pseudo-seconds, ~10 pseudo-days
+end_time = 1000000
 EPSILON = 0.000001 # numeric small number
 N_sigma = 0.05  # stochastic noise
 np.random.seed(1)
 
 #synthesis and degradation
 deg_coef = 20
-C3_SHR_coef = float(sys.argv[1]) # C3: 3; C4: 6
-C3_SCR_coef = float(sys.argv[2]) # C3: 3; C4: 6
-C3_auxin_coef = float(sys.argv[3]) # C3: 0.5; C4: 2.5
+C3_SHR_coef = float(sys.argv[1])
+C3_SCR_coef = float(sys.argv[2])
+C3_auxin_coef = float(sys.argv[3])
 
 #SHR
-k_deg_S = deg_coef*2e-06  # 20%/d degradation of SHR --> max conc. = 500
-vm_syn_S_V = C3_SHR_coef*5*1e-3 # ~100 unit per day in vein
-vm_syn_S_M = C3_SHR_coef*10*1e-5 # much lower exp. in M
-cond_S = 0.5*1e-4 # coef. delta_conc per second
+k_deg_S = deg_coef*2e-06
+vm_syn_S_V = C3_SHR_coef*5*1e-3
+vm_syn_S_M = C3_SHR_coef*10*1e-5
+cond_S = 0.5*1e-4
 #SCR
-k_deg_C = deg_coef*2e-06  # 20%/d degradation
-vm_syn_C_V = C3_SCR_coef*2*1e-3 # SCR expressed in both BS and M
-vm_syn_C_M = C3_SCR_coef*5*1e-3 # ~100 unit per day
-c0_C_SC = 0.0 # when [S-C] = 0, vm = a0 + 1/(1+exp(a1*[SC]+a2)) = 0.27
-c1_C_SC = -0.2 # when [S-C] = 40, vm = 0.75
-c2_C_SC = 2 # when [S-C] = 70, vm = 1.2
-cond_C = 0 #1e-4 # coef. delta_conc per second
+k_deg_C = deg_coef*2e-06
+vm_syn_C_V = C3_SCR_coef*2*1e-3
+vm_syn_C_M = C3_SCR_coef*5*1e-3
+c0_C_SC = 0.0
+c1_C_SC = -0.2
+c2_C_SC = 2
+cond_C = 0
 #SHR-SCR
-k_deg_SC = deg_coef*2e-06  # 20%/d degradation
+k_deg_SC = deg_coef*2e-06
 km_SC_S = 40
 km_SC_C = 40
-vm_syn_SC_V = 5*1e-3 # ~100 unit per day
-vm_syn_SC_M = 5*1e-3 # ~100 unit per day
+vm_syn_SC_V = 5*1e-3
+vm_syn_SC_M = 5*1e-3
 cond_SC = 0
 #Auxin
-k_deg_auxin = 0.1*deg_coef*2e-06  # 20%/d degradation
+k_deg_auxin = 0.1*deg_coef*2e-06
 vm_syn_auxin_V = 0
-vm_syn_auxin_M = C3_auxin_coef*1e-3 # 1 for C4
-b0_auxin_SC = 0.25 # when [S-C] = 0, vm = b0 + 1/(1+exp(b1*[SC]+b2)) = 1.25
-b1_auxin_SC = 0.2 # when [S-C] = 20, vm = 0.7
-b2_auxin_SC = -1 # when [S-C] = 40, vm = 0.3
-cond_auxin = 0.2*1e-4 # coef. delta_conc per second
+vm_syn_auxin_M = C3_auxin_coef*1e-3
+b0_auxin_SC = 0.25
+b1_auxin_SC = 0.2
+b2_auxin_SC = -1
+cond_auxin = 0.2*1e-4
 #SG (substrate for growth)
-cond_SG = 0.2*1e-4 # coef. delta_conc per second
+cond_SG = 0.2*1e-4
 
 #cell growth
-cell_Vol = 1 # leaf M cell volume (1 unit). Mature vein: 4??
+cell_Vol = 1 # leaf M cell volume
 cell_Vol_upper = 2  # critical volume for cell division
-vm_Vol_growth = 5*8e-6  # volume growth coef./second -- > 100%/d volume growth/day
+vm_Vol_growth = 5*8e-6  # volume growth coef./second
 km_growth_SG = 20
-SG2growth_coef = 10 # 10 SGs will be used for 1 volume growth
-SG2maintain_coef = 100*1e-6 # 1 SGs will be used for 1 volume maintain for one day
+SG2growth_coef = 10 # cell growth cost
+SG2maintain_coef = 100*1e-6 # cell maintenance cost
 #SC --> growth
-a0_growth_SC = 0 # when [S-C] = 0, vm = a0 + 1/(1+exp(a1*[SC]+a2)) = 0.27
-a1_growth_SC = -0.1 # when [S-C] = 40, vm = 0.75
-a2_growth_SC = 2 # when [S-C] = 70, vm = 1.2
+a0_growth_SC = 0
+a1_growth_SC = -0.1
+a2_growth_SC = 2
 #Auxin --| growth
-d0_growth_auxin = 0.25 # when [Auxin] = 0, vm = b0 + 1/(1+exp(b1*[SC]+b2)) = 1.25
-d1_growth_auxin = 0.2 # when [Auxin] = 20, vm = 0.7
-d2_growth_auxin = -1 # when [Auxin] = 40, vm = 0.3
+d0_growth_auxin = 0.25
+d1_growth_auxin = 0.2
+d2_growth_auxin = -1
 
 #vein formation
-auxin_upper = 30  # critical diffV concentration for procambium initiation
+auxin_upper = 30
 
 #### initial concentrations.
 c_S_V = 0
 c_C_V = 0
 c_SC_V = 0
-c_auxin_V = 0 # constant auxin conc. in vein
-c_SG_V = 50 # constant SG conc. in vein
+c_auxin_V = 0
+c_SG_V = 50
 
 c_S_M = 0
 c_C_M = 0
@@ -141,7 +141,7 @@ conc_auxin_time = []
 conc_SG_time = []
 record_step = 1000
 
-real_simulation = 1 # if = 0, neither cells divide nor veins form
+real_simulation = 1
 
 # simulation
 for t_i in range(end_time):
@@ -288,7 +288,7 @@ if not real_simulation:
     output_fig = 'conc_VS_time.png'
     fig1, ((ax[0],ax[1],ax[2],ax[3],ax[4],ax[5],ax[6]),(ax[7],ax[8],ax[9],ax[10],ax[11],ax[12],ax[13]),
            (ax[14],ax[15],ax[16],ax[17],ax[18],ax[19],ax[20]),(ax[21],ax[22],ax[23],ax[24],ax[25],ax[26],ax[27]),
-           (ax[28],ax[29],ax[30],ax[31],ax[32],ax[33],ax[34])) = plt.subplots(5, 7, figsize=(15, 15))  # figsize=(6, 8)
+           (ax[28],ax[29],ax[30],ax[31],ax[32],ax[33],ax[34])) = plt.subplots(5, 7, figsize=(15, 15))
     plt.rcParams['font.size'] = 12
     plt.subplots_adjust(left=0.1, bottom=0.11, right=0.98, top=0.98, wspace=0.35, hspace=0.35)
 
